@@ -1,27 +1,26 @@
 'use client';
 
-import { DefaultChatTransport } from 'ai';
-import { useChat } from '@ai-sdk/react';
-import { useEffect, useState } from 'react';
+import { useChat, DefaultChatTransport } from '@ai-sdk/react';
+import { useEffect, useState, memo } from 'react';
 import useSWR, { useSWRConfig } from 'swr';
-import { ChatHeader } from '@/components/chat-header';
-import type { Vote } from '@/lib/db/schema';
-import { fetcher, fetchWithErrorHandlers, generateUUID } from '@/lib/utils';
-import { Artifact } from './artifact';
-import { MultimodalInput } from './multimodal-input';
-import { Messages } from './messages';
-import type { VisibilityType } from './visibility-selector';
-import { useArtifactSelector } from '@/hooks/use-artifact';
-import { unstable_serialize } from 'swr/infinite';
-import { getChatHistoryPaginationKey } from './sidebar-history';
-import { toast } from './toast';
-import type { Session } from 'next-auth';
 import { useSearchParams } from 'next/navigation';
 import { useChatVisibility } from '@/hooks/use-chat-visibility';
 import { useAutoResume } from '@/hooks/use-auto-resume';
-import { ChatSDKError } from '@/lib/errors';
+import { useArtifactSelector } from '@/hooks/use-artifact';
+import { unstable_serialize } from 'swr/infinite';
+import type { Session } from 'next-auth';
+import type { VisibilityType } from '@/components/visibility-selector';
 import type { Attachment, ChatMessage } from '@/lib/types';
-import { useDataStream } from './data-stream-provider';
+import type { Vote } from '@/lib/db/schema';
+import { fetcher, fetchWithErrorHandlers, generateUUID } from '@/lib/utils';
+import { ChatSDKError } from '@/lib/errors';
+import { getChatHistoryPaginationKey } from '@/components/sidebar-history';
+import { toast } from '@/components/toast';
+import { ChatHeader } from '@/components/chat-header';
+import { Messages } from '@/components/messages';
+import { MultimodalInput } from '@/components/multimodal-input';
+import { Artifact } from '@/components/artifact';
+import { useDataStream } from '@/components/data-stream-provider';
 
 export function Chat({
   id,
@@ -158,9 +157,9 @@ export function Chat({
               stop={stop}
               attachments={attachments}
               setAttachments={setAttachments}
+              sendMessage={sendMessage}
               messages={messages}
               setMessages={setMessages}
-              sendMessage={sendMessage}
               selectedVisibilityType={visibilityType}
             />
           )}
@@ -186,3 +185,5 @@ export function Chat({
     </>
   );
 }
+
+export const MemoizedChat = memo(Chat);
