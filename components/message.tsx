@@ -19,6 +19,8 @@ import { MessageReasoning } from './message-reasoning';
 import type { UseChatHelpers } from '@ai-sdk/react';
 import type { ChatMessage } from '@/lib/types';
 import { useDataStream } from './data-stream-provider';
+import { CareerPathCard } from './career-path-card';
+import { SkillGaps } from './skill-gaps';
 
 // Type narrowing is handled by TypeScript's control flow analysis
 // The AI SDK provides proper discriminated unions for tool calls
@@ -57,6 +59,7 @@ const PurePreviewMessage = ({
         className="w-full mx-auto max-w-3xl px-4 group/message"
         initial={{ y: 5, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 0, opacity: 0 }}
         data-role={message.role}
       >
         <div
@@ -164,7 +167,6 @@ const PurePreviewMessage = ({
                   );
                 }
               }
-
               if (type === 'tool-getWeather') {
                 const { toolCallId, state } = part;
 
@@ -307,6 +309,52 @@ const PurePreviewMessage = ({
                   );
                 }
               }
+
+              if (type === 'tool-getCareerPaths') {
+                const { toolCallId, state } = part;
+
+                if (state === 'input-available') {
+                  // You can add a loading state here if needed
+                }
+
+                if (state === 'output-available') {
+                  const { output } = part;
+                  return (
+                    <div key={toolCallId} className="flex flex-col gap-4">
+                      {output.recommendations.map((rec: any, recIndex: number) => (
+                        <CareerPathCard
+                          key={recIndex}
+                          careerPath={rec.path}
+                          description={rec.description}
+                          requiredSkills={rec.requiredSkills}
+                        />
+                      ))}
+                    </div>
+                  );
+                }
+              }
+
+              if (type === 'tool-getSkillGaps') {
+                const { toolCallId, state } = part;
+
+                if (state === 'input-available') {
+                  // You can add a loading state here if needed
+                }
+
+                if (state === 'output-available') {
+                  const { output } = part;
+                  return (
+                    <div key={toolCallId} className="flex flex-col gap-4">
+                      <SkillGaps
+                        careerPath={output.careerPath}
+                        skillGaps={output.skillGaps}
+                      />
+                    </div>
+                  );
+                }
+              }
+
+              return null;
             })}
 
             {!isReadonly && (
