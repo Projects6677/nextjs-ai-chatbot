@@ -1,6 +1,42 @@
 import { tool } from 'ai';
 import { z } from 'zod';
 
+const mockCareerData = {
+  'Data Scientist': {
+    description: 'Analyzes complex data to help organizations make better decisions.',
+    requiredSkills: ['Python', 'R', 'SQL', 'Machine Learning', 'Statistics', 'Data Visualization', 'Big Data Technologies'],
+  },
+  'Full Stack Developer': {
+    description: 'Builds and maintains both the front-end and back-end of websites and applications.',
+    requiredSkills: ['JavaScript', 'React', 'Node.js', 'Python', 'Go', 'Databases', 'API Design', 'Cloud Computing'],
+  },
+  'Cloud Engineer': {
+    description: 'Designs, implements, and manages cloud infrastructure.',
+    requiredSkills: ['Cloud Computing', 'Networking', 'Security', 'Linux', 'Docker', 'Kubernetes', 'AWS/GCP/Azure'],
+  },
+  'Product Manager': {
+    description: 'Leads the development of a product by defining its vision and strategy.',
+    requiredSkills: ['Market Research', 'User Experience (UX)', 'Agile Methodologies', 'Data Analysis', 'Communication', 'Strategic Planning'],
+  },
+  'Digital Marketing Specialist': {
+    description: 'Drives brand awareness and sales through digital channels.',
+    requiredSkills: ['SEO', 'SEM', 'Content Marketing', 'Social Media Marketing', 'Analytics', 'Email Marketing'],
+  },
+};
+
+const mockSkillTaxonomy = {
+  'coding': 'Python',
+  'programming': 'JavaScript',
+  'frontend': 'React',
+  'backend': 'Node.js',
+  'data analysis': 'Statistics',
+  'databases': 'SQL',
+  'cloud': 'Cloud Computing',
+  'aws': 'AWS/GCP/Azure',
+  'project management': 'Agile Methodologies',
+  'marketing': 'Digital Marketing',
+};
+
 // This tool maps a user's self-reported skills to a standardized taxonomy.
 export const mapSkills = tool({
   description: 'Maps a user\'s self-reported skills to a standardized skills taxonomy.',
@@ -8,15 +44,16 @@ export const mapSkills = tool({
     skills: z.array(z.string()).describe('A list of skills provided by the user'),
   }),
   execute: async ({ skills }) => {
-    // In a real application, this would call a service or internal function to map skills.
-    // For now, we will simulate the output.
-    const mappedSkills = skills.map(skill => ({
-      original: skill,
-      mapped: `Standardized version of ${skill}`
-    }));
+    const mappedSkills = skills.map(skill => {
+      const standardizedSkill = mockSkillTaxonomy[skill.toLowerCase()] || skill;
+      return {
+        original: skill,
+        mapped: standardizedSkill
+      };
+    });
     return {
       message: 'Skills mapped successfully.',
-      mappedSkills: mappedSkills,
+      mappedSkills: mappedSkills.map(s => s.mapped),
     };
   },
 });
@@ -29,28 +66,29 @@ export const getCareerPaths = tool({
     interests: z.array(z.string()).describe('A list of user interests'),
   }),
   execute: async ({ mappedSkills, interests }) => {
-    // In a real application, this would query a knowledge base or API.
-    // For now, we will simulate some recommendations.
-    const recommendations = [
-      {
-        path: 'Data Scientist',
-        description: 'Analyzes complex data to help organizations make better decisions.',
-        requiredSkills: ['Statistics', 'Machine Learning', 'Python'],
-      },
-      {
-        path: 'Full Stack Developer',
-        description: 'Builds and maintains both the front-end and back-end of websites and applications.',
-        requiredSkills: ['JavaScript', 'React', 'Node.js', 'Databases'],
-      },
-      {
-        path: 'Cloud Engineer',
-        description: 'Designs, implements, and manages cloud infrastructure.',
-        requiredSkills: ['Cloud Computing', 'AWS/GCP/Azure', 'Networking', 'Security'],
-      }
-    ];
+    // A simple recommendation logic based on matching skills and interests
+    const recommendations = Object.keys(mockCareerData)
+      .filter(careerPath => {
+        const requiredSkills = mockCareerData[careerPath].requiredSkills;
+        const matches = mappedSkills.some(skill => requiredSkills.includes(skill));
+        const interestMatch = interests.some(interest => careerPath.toLowerCase().includes(interest.toLowerCase()));
+        return matches || interestMatch;
+      })
+      .map(path => ({
+        path: path,
+        description: mockCareerData[path].description,
+        requiredSkills: mockCareerData[path].requiredSkills,
+      }));
+
     return {
       message: 'Career paths recommended.',
-      recommendations: recommendations,
+      recommendations: recommendations.length > 0 ? recommendations : [
+        {
+          path: 'Software Engineer',
+          description: 'Develops software for various applications.',
+          requiredSkills: ['Programming', 'Algorithms', 'Data Structures']
+        }
+      ],
     };
   },
 });
@@ -63,14 +101,7 @@ export const getSkillGaps = tool({
     careerPath: z.string().describe('The name of the target career path'),
   }),
   execute: async ({ userSkills, careerPath }) => {
-    // In a real application, this would compare skills against a stored career path definition.
-    // For now, we will simulate the output.
-    const careerPathSkills: Record<string, string[]> = {
-      'Data Scientist': ['Statistics', 'Machine Learning', 'Python', 'SQL'],
-      'Full Stack Developer': ['JavaScript', 'React', 'Node.js', 'Databases', 'API Design'],
-      'Cloud Engineer': ['Cloud Computing', 'AWS/GCP/Azure', 'Networking', 'Security', 'Linux']
-    };
-    const requiredSkills = careerPathSkills[careerPath] || [];
+    const requiredSkills = mockCareerData[careerPath]?.requiredSkills || [];
     const skillGaps = requiredSkills.filter(skill => !userSkills.includes(skill));
 
     return {
